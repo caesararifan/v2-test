@@ -1,7 +1,14 @@
-# Subscriber usage automation - install with:  crontab scripts/crontab.example
-# (edit the two paths below first; `which node` gives NODE_BIN)
+# Subscriber usage automation.
+# Install with:  crontab scripts/crontab.example
+# Before installing, replace /opt/usage-api with the absolute path of this project
+# and /usr/bin/node with the output of `which node`. Create the log folder first: mkdir -p logs
 #
-# Option A (recommended): cron implementations that support CRON_TZ (cronie: RHEL/Fedora/Alpine-busybox varies)
+# Choose ONE of the two options below.
+
+# ---------------------------------------------------------------------------
+# Option A: cron that supports CRON_TZ (e.g. cronie on RHEL/Fedora/Rocky).
+# NOTE: Debian/Ubuntu/Kali cron does NOT support CRON_TZ - use Option B there.
+# ---------------------------------------------------------------------------
 CRON_TZ=Asia/Jakarta
 API_BASE_URL=http://localhost:3000
 
@@ -10,8 +17,11 @@ API_BASE_URL=http://localhost:3000
 # Cleanup daily at 01:00 WIB
 0 1 * * * cd /opt/usage-api && /usr/bin/node scripts/cleanup.js >> logs/cleanup.log 2>&1
 
-# Option B: cron WITHOUT CRON_TZ support (e.g. Debian/Ubuntu cron) on a server whose clock is UTC.
-# WIB = UTC+7 (no DST), so 08:00/12:00/15:00 WIB = 01:00/05:00/08:00 UTC, and 01:00 WIB = 18:00 UTC.
-# Remove the CRON_TZ line above and use these instead:
+# ---------------------------------------------------------------------------
+# Option B: cron WITHOUT CRON_TZ support, on a server whose clock is UTC.
+# WIB = UTC+7 with no DST, so 08:00 / 12:00 / 15:00 WIB = 01:00 / 05:00 / 08:00 UTC,
+# and 01:00 WIB = 18:00 UTC.
+# To use it: delete the Option A block above, then remove the leading "# " from the two lines below.
+# ---------------------------------------------------------------------------
 # 0 1,5,8 * * * cd /opt/usage-api && /usr/bin/node scripts/snapshot.js >> logs/snapshot.log 2>&1
 # 0 18 * * * cd /opt/usage-api && /usr/bin/node scripts/cleanup.js >> logs/cleanup.log 2>&1
