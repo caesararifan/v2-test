@@ -1,0 +1,17 @@
+{
+  "name": "subscriber-usage-api",
+  "version": "1.0.0",
+  "description": "Subscriber usage API, snapshot automation, SQL and troubleshooting answers",
+  "main": "src/server.js",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "snapshot": "node scripts/snapshot.js",
+    "cleanup": "node scripts/cleanup.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

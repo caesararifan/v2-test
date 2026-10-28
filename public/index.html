@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subscriber Usage</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+  label { display: flex; flex-direction: column; font-size: .85rem; gap: .25rem; }
+  input, button { padding: .5rem; font: inherit; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { border-bottom: 1px solid #8884; padding: .4rem .5rem; text-align: left; }
+  #msg { min-height: 1.4em; font-size: .9rem; }
+  .err { color: #c0392b; }
+  .ok { color: #1e8449; }
+</style>
+</head>
+<body>
+<h1>Subscriber Usage</h1>
+<form id="f">
+  <label>subscriberId <input name="subscriberId" required placeholder="SUB01"></label>
+  <label>callMinutes <input name="callMinutes" type="number" min="0" step="1" required></label>
+  <label>smsCount <input name="smsCount" type="number" min="0" step="1" required></label>
+  <label>dataUsageMB <input name="dataUsageMB" type="number" min="0" step="any" required></label>
+  <button type="submit">Record usage</button>
+</form>
+<div id="msg"></div>
+<label>Filter by subscriberId <input id="filter" placeholder="(all)"></label>
+<table>
+  <thead><tr><th>Subscriber</th><th>Call min</th><th>SMS</th><th>Data MB</th><th>Recorded at</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script>
+const msg = document.getElementById('msg');
+const rows = document.getElementById('rows');
+const filter = document.getElementById('filter');
+
+function cell(text) { const td = document.createElement('td'); td.textContent = text; return td; }
+
+async function load() {
+  const q = filter.value.trim();
+  const res = await fetch('/api/usage?limit=1000' + (q ? '&subscriberId=' + encodeURIComponent(q) : ''));
+  const data = await res.json();
+  rows.replaceChildren(...data.items.map((r) => {
+    const tr = document.createElement('tr');
+    tr.append(cell(r.subscriberId), cell(r.callMinutes), cell(r.smsCount), cell(r.dataUsageMB),
+      cell(new Date(r.recordedAt).toLocaleString()));
+    return tr;
+  }));
+}
+
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {
+    subscriberId: fd.get('subscriberId').trim(),
+    callMinutes: Number(fd.get('callMinutes')),
+    smsCount: Number(fd.get('smsCount')),
+    dataUsageMB: Number(fd.get('dataUsageMB')),
+  };
+  const res = await fetch('/api/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (res.ok) { msg.className = 'ok'; msg.textContent = 'Saved.'; e.target.reset(); load(); }
+  else { msg.className = 'err'; msg.textContent = (data.details || []).map((d) => d.field + ': ' + d.message).join('; ') || data.message; }
+});
+filter.addEventListener('input', load);
+load();
+</script>
+</body>
+</html>
