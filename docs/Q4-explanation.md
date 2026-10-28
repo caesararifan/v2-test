@@ -13,7 +13,7 @@ function getTotalUsageMB(records) {
 There are two defects in the `reduce` call. The first is the one that produces the visible failure; the second makes it worse.
 
 1. **The callback never `return`s the accumulator (primary root cause).**
-   `reduce` uses the callback's return value as `total` for the next iteration. The callback only does `total += ...`, which changes the local parameter and returns `undefined`. So after the first iteration `total` is `undefined`, and `undefined + 1200` is `NaN`. The function itself also has no outer `return` of a meaningful value: whatever the last callback call returned (`undefined`) is what `getTotalUsageMB` returns.
+   `reduce` uses the callback's return value as `total` for the next iteration. The callback only does `total += ...`, which changes the local parameter and returns `undefined`. So after the first iteration `total` is `undefined`, and `undefined + 1200` is `NaN`. `getTotalUsageMB` returns whatever `reduce` returns, which is the last callback result: `undefined`.
 
 2. **No initial value is passed to `reduce`.**
    Without a second argument, `reduce` uses `records[0]` – the whole *object* – as the first `total` and starts iterating at index 1. So the first `total += record.dataUsageMB` is `{...} + 1200`, which JavaScript turns into the string `"[object Object]1200"` instead of a number. Other consequences of the missing initial value:
@@ -47,7 +47,7 @@ Arrow functions with a **block body** (`{ ... }`) do not return implicitly – o
 
 ## How to prevent this class of bug
 
-- **Lint rules:** enable ESLint `array-callback-return` (with `checkForEach: false`; it flags a `reduce` callback that doesn't return on every path) – this alone would have caught the bug at commit time. `unicorn/no-array-reduce` or `prefer-reduce-type-parameter` style rules help teams that want to restrict `reduce`.
+- **Lint rules:** enable ESLint `array-callback-return`; it flags a `reduce` callback that doesn't return a value on every path, so it would have caught this at commit time. Teams that find `reduce` error-prone can also restrict it with `unicorn/no-array-reduce`.
 - **Always pass an initial value** to `reduce` – make it a review/lint convention. It fixes empty-array crashes and makes the accumulator type obvious.
 - **Static typing:** TypeScript (or JSDoc + `// @ts-check`) flags both problems: `(total: number, record: Usage) => number` fails to compile when the callback returns `void`, and `total += record.dataUsageMB` on an object accumulator is a type error.
 - **Unit tests for edge cases**, not only the happy path: empty array, one element, many elements, invalid element. This repo has them in `test/scripts.test.js`; the single-element and empty cases both fail against the original code.
