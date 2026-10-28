@@ -1,4 +1,4 @@
--- Schema + sample data (PostgreSQL-compatible; also runs unchanged on SQLite/MySQL)
+-- Schema + sample data (tested on PostgreSQL 16 and SQLite)
 CREATE TABLE subscribers (
   id              VARCHAR(10) PRIMARY KEY,
   name            VARCHAR(100) NOT NULL,
